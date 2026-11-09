@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-09
+
 ### Added
 
 - Gladys speaks with the free voice of Google Translate (no account, no API
@@ -26,3 +28,6 @@ the notes of the version's GitHub Release.
   speakers asks Google once.
 - Supervision shows whether Google Translate answers, and why not.
 - A "Test the voice" button in the configuration screen.
+
+[Unreleased]: https://github.com/guim31/gladys-google-translate-tts/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/guim31/gladys-google-translate-tts/releases/tag/v1.0.0
