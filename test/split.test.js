@@ -18,6 +18,10 @@ test('Markdown marks are not read and line breaks end a piece', () => {
   assert.deepEqual(splitText('**Salon** : 21 °C\n# Cuisine\n`ok`'), ['Salon : 21 °C Cuisine ok']);
 });
 
+test('symbols that are not Markdown marks are kept', () => {
+  assert.deepEqual(splitText('- C# et F#, ~5 min, #1'), ['C# et F#, ~5 min, #1']);
+});
+
 test('a long text is cut after sentences, never over the limit, nothing lost', () => {
   const sentence = "La température du salon est de 21,5 degrés, l'humidité reste correcte.";
   const text = Array.from({ length: 28 }, () => sentence).join(' ');

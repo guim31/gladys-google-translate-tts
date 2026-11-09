@@ -20,6 +20,8 @@ import { GoogleTranslateClient } from './google/client.js';
 
 // Clips kept in memory (2,000 characters make about 1.3 MB).
 export const CACHE_SIZE = 16;
+// What Gladys accepts (5 MB decoded); 2,000 characters read slowly make ~1.8 MB.
+export const MAX_CLIP_BYTES = 5 * 1000 * 1000;
 
 // Failures about the service itself, shown as the status. The others concern
 // one text only (nothing to say in it, too long to be spoken in time).
@@ -70,10 +72,10 @@ export const MESSAGES = {
     es: 'Google Traductor ya no responde con audio: puede que la voz gratuita haya cambiado. Busque una actualización de la integración.',
   },
   too_long: {
-    en: 'The text is too long to be spoken within the 30 seconds Gladys waits.',
-    fr: 'Le texte est trop long pour être prononcé dans les 30 secondes que Gladys attend.',
-    de: 'Der Text ist zu lang, um in den 30 Sekunden gesprochen zu werden, die Gladys wartet.',
-    es: 'El texto es demasiado largo para pronunciarse en los 30 segundos que espera Gladys.',
+    en: 'The text is too long to be spoken within the time and size Gladys accepts.',
+    fr: 'Le texte est trop long pour être prononcé dans le temps et la taille que Gladys accepte.',
+    de: 'Der Text ist zu lang, um in der Zeit und Größe gesprochen zu werden, die Gladys annimmt.',
+    es: 'El texto es demasiado largo para pronunciarse en el tiempo y el tamaño que acepta Gladys.',
   },
   empty: {
     en: 'There is nothing to say in the text.',
@@ -140,9 +142,6 @@ export function testMessage(code, clip) {
  * @returns {{en: string, fr: string, de: string, es: string}} The message.
  */
 export function describeError(err) {
-  if (err?.kind === 'timeout' && /too long/.test(err.message)) {
-    return MESSAGES.too_long;
-  }
   return MESSAGES[err?.kind] ?? MESSAGES.unreachable;
 }
 
@@ -187,6 +186,17 @@ export class GoogleTranslateTts {
    * await tts.applyConfig(gladys.config);
    */
   async applyConfig(rawConfig) {
+    this.useConfig(rawConfig);
+    await this.check();
+  }
+
+  /**
+   * Take the settings into account, synchronously: a request arriving meanwhile
+   * already uses them.
+   * @param {Record<string, unknown>} rawConfig - Configuration from the SDK.
+   * @returns {void}
+   */
+  useConfig(rawConfig) {
     this.settings = normalizeConfig(rawConfig);
     this.loaded = true;
     this.generation += 1;
@@ -194,6 +204,13 @@ export class GoogleTranslateTts {
     this.inFlight.clear();
     const { language, accent, slow } = this.settings;
     this.logger.info(`Voice settings: language ${language}, accent ${accent}, slow ${slow}`);
+  }
+
+  /**
+   * Check that Google Translate answers, shown as the status.
+   * @returns {Promise<void>} Never rejects.
+   */
+  async check() {
     try {
       // One word: a single light request.
       await this.speak('Gladys', null);
@@ -212,7 +229,12 @@ export class GoogleTranslateTts {
       return;
     }
     this.loading ??= this.gladys.getConfig().then(
-      (config) => this.applyConfig(config),
+      (config) => {
+        this.useConfig(config);
+        // Not awaited: the request waiting for this configuration has its
+        // own time budget. check() never rejects.
+        this.check();
+      },
       (err) => {
         this.loading = null;
         throw err;
@@ -235,6 +257,11 @@ export class GoogleTranslateTts {
     try {
       await this.load();
       const clip = await this.speak(typeof text === 'string' ? text : '', language);
+      if (clip.audio.length > MAX_CLIP_BYTES) {
+        throw new Error(
+          `${MESSAGES.too_long.en} [${clip.audio.length} bytes, Gladys takes ${MAX_CLIP_BYTES} at most]`,
+        );
+      }
       return `audio/mpeg;base64,${clip.audio.toString('base64')}`;
     } catch (err) {
       // The failed ack only reaches the Gladys server log: say it here too,
@@ -255,7 +282,8 @@ export class GoogleTranslateTts {
     // here; the test speaks the fallback language.
     const code = voiceCode(this.settings, null);
     const base = code.split('-')[0];
-    const clip = await this.speak(SAMPLES[base] ?? SAMPLES.en, null);
+    // Never from memory: the button must really reach Google.
+    const clip = await this.speak(SAMPLES[base] ?? SAMPLES.en, null, { fresh: true });
     this.logger.info(`Voice tested: ${code}, ${clip.seconds.toFixed(1)} s`);
     return testMessage(code, clip);
   }
@@ -265,19 +293,20 @@ export class GoogleTranslateTts {
    * from Google Translate. Reports the outcome as the status.
    * @param {string} text - The text.
    * @param {string|null} language - Language of the requesting user.
+   * @param {{fresh?: boolean}} [options] - `fresh`: ask Google even when the clip is known.
    * @returns {Promise<{audio: Buffer, chunks: number, seconds: number}>} The clip.
    * @throws {Error} The actionable failure.
    */
-  async speak(text, language) {
+  async speak(text, language, { fresh = false } = {}) {
     const { settings, generation } = this;
     const code = voiceCode(settings, language);
     const key = JSON.stringify([code, settings.slow, text.trim()]);
-    const cached = this.cache.get(key);
+    const cached = fresh ? null : this.cache.get(key);
     if (cached) {
       this.logger.debug(`Clip served from memory (${text.length} characters)`);
       return cached;
     }
-    let pending = this.inFlight.get(key);
+    let pending = fresh ? null : this.inFlight.get(key);
     if (!pending) {
       pending = this.client.synthesize({ text, language: code, slow: settings.slow });
       this.inFlight.set(key, pending);

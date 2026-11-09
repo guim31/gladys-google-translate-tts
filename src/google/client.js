@@ -26,7 +26,7 @@ const USER_AGENT =
 
 export class GoogleTranslateError extends Error {
   /**
-   * @param {'unreachable'|'timeout'|'rate_limited'|'refused'|'server'|'invalid_response'|'empty'} kind - What failed.
+   * @param {'unreachable'|'timeout'|'rate_limited'|'refused'|'server'|'invalid_response'|'empty'|'too_long'} kind - What failed.
    * @param {string} message - Technical detail, for the logs.
    * @param {{status?: number, cause?: unknown}} [options]
    */
@@ -92,11 +92,14 @@ export class GoogleTranslateClient {
     this.requests += 1;
 
     let response;
+    let body;
     try {
       response = await this.fetch(url, {
         headers: { 'User-Agent': USER_AGENT },
         signal: AbortSignal.timeout(timeoutMs),
       });
+      // Inside the try: the timeout also covers a body that stalls.
+      body = Buffer.from(await response.arrayBuffer());
     } catch (err) {
       if (err?.name === 'TimeoutError' || err?.name === 'AbortError') {
         throw new GoogleTranslateError('timeout', `no answer within ${timeoutMs} ms`, {
@@ -108,14 +111,11 @@ export class GoogleTranslateClient {
     }
 
     if (!response.ok) {
-      // Drain the body so the connection can be reused.
-      await response.arrayBuffer().catch(() => {});
       const { status } = response;
       const kind = status === 429 ? 'rate_limited' : status >= 500 ? 'server' : 'refused';
       throw new GoogleTranslateError(kind, `HTTP ${status}`, { status });
     }
     const type = response.headers.get('content-type') ?? '';
-    const body = Buffer.from(await response.arrayBuffer());
     const clip = type.startsWith('audio/') ? parseMp3(body) : null;
     if (!clip) {
       throw new GoogleTranslateError(
@@ -130,9 +130,9 @@ export class GoogleTranslateClient {
    * Speak a whole text: cut into chunks, requested in order, joined.
    * @param {{text: string, language: string, slow: boolean}} request - What to say, and how.
    * @returns {Promise<{audio: Buffer, chunks: number, seconds: number}>} The MP3 clip.
-   * @throws {GoogleTranslateError} `empty` when there is nothing to say, or the
-   *   failure of a request (`timeout` as well when the whole text does not fit
-   *   in the time Gladys waits).
+   * @throws {GoogleTranslateError} `empty` when there is nothing to say,
+   *   `too_long` when the whole text does not fit in the time Gladys waits, or
+   *   the failure of a request.
    * @example
    * await client.synthesize({ text: 'La porte est ouverte.', language: 'fr', slow: false });
    */
@@ -149,7 +149,7 @@ export class GoogleTranslateClient {
         const left = deadline - this.now();
         if (left <= 0) {
           throw new GoogleTranslateError(
-            'timeout',
+            'too_long',
             `text too long to be spoken in time (${parts.length} of ${chunks.length} parts done)`,
           );
         }

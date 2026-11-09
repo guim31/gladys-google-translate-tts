@@ -85,7 +85,13 @@ export function parseMp3(buffer) {
   let offset = start;
   let frames = 0;
   let seconds = 0;
-  for (let frame = frameAt(buffer, offset); frame; frame = frameAt(buffer, offset)) {
+  // A frame cut short (a body interrupted) is dropped: joined to the next clip,
+  // it would glitch at the seam.
+  for (
+    let frame = frameAt(buffer, offset);
+    frame && offset + frame.length <= buffer.length;
+    frame = frameAt(buffer, offset)
+  ) {
     frames += 1;
     seconds += frame.samples / frame.sampleRate;
     offset += frame.length;
@@ -94,5 +100,5 @@ export function parseMp3(buffer) {
   if (frames < 2) {
     return null;
   }
-  return { audio: buffer.subarray(start, Math.min(offset, buffer.length)), frames, seconds };
+  return { audio: buffer.subarray(start, offset), frames, seconds };
 }

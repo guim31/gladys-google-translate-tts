@@ -31,6 +31,16 @@ test('an ID3 tag at the head is dropped', () => {
   assert.deepEqual(clip.audio, oui);
 });
 
+test('a frame cut short at the end is dropped', () => {
+  const full = parseMp3(oui);
+  const cut = parseMp3(oui.subarray(0, oui.length - 100));
+  assert.equal(cut.frames, full.frames - 1);
+  assert.ok(cut.audio.length < oui.length - 100);
+  // What is kept ends on a whole frame: joined clips stay frame-aligned.
+  const joined = parseMp3(Buffer.concat([cut.audio, yes]));
+  assert.equal(joined.frames, cut.frames + parseMp3(yes).frames);
+});
+
 test('what is not MP3 audio is refused', () => {
   assert.equal(parseMp3(Buffer.from('<html><body>Error 400</body></html>')), null);
   assert.equal(parseMp3(Buffer.alloc(0)), null);

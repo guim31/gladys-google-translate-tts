@@ -132,6 +132,26 @@ test('a failing Google Translate fails the synthesis and shows in Supervision, t
   assert.ok(lines.info.includes('Google Translate answers again'));
 });
 
+test('a text too long for the time Gladys waits fails without touching the status', async () => {
+  let clock = 0;
+  const gladys = createFakeGladys();
+  const fetch = fakeFetch(() => {
+    clock += 10_000;
+    return mp3();
+  });
+  const { logger } = recordingLogger();
+  const client = new GoogleTranslateClient({ fetch, now: () => clock });
+  registerHandlers(gladys, new GoogleTranslateTts(gladys, { client, logger }), { logger });
+  await gladys.connect();
+  const statuses = gladys.fake.connectionStatuses.length;
+  const text = Array.from({ length: 30 }, (_, i) => `Phrase ${i}, la porte est ouverte.`).join(' ');
+  const ack = await gladys.fake.ttsSynthesize(text, 'fr');
+  assert.equal(ack.success, false);
+  assert.match(ack.error, /too long/);
+  assert.equal(gladys.fake.connectionStatuses.length, statuses);
+  assert.equal(gladys.fake.connectionStatus.connected, true);
+});
+
 test('a text with nothing to say fails without touching the status', async () => {
   const { gladys } = await setup();
   const statuses = gladys.fake.connectionStatuses.length;
@@ -157,6 +177,10 @@ test('the "Test the voice" button speaks a sentence and says what came back', as
   assert.match(ack.data.message.fr, /en « fr-CA » : un clip de 0,7 s \(5 Ko\)/);
   assert.match(ack.data.message.en, /in "fr-CA": a 0\.7-second clip/);
   assert.equal(fetch.calls.at(-1).url.searchParams.get('q'), 'Bonjour, ici Gladys.');
+  // A second press asks Google again.
+  const before = fetch.calls.length;
+  await gladys.fake.action('test_voice');
+  assert.equal(fetch.calls.length - before, 1);
 });
 
 test('a request arriving before the configuration is read waits for it', async () => {

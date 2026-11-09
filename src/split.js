@@ -25,11 +25,15 @@ const SPEAKABLE = /[\p{L}\p{N}\p{So}]/u;
  * @returns {string[]} The lines, trimmed, whitespace collapsed.
  */
 function lines(text) {
-  return text
-    .replace(/[*#`~]+/g, ' ')
-    .split(/\r?\n+/)
-    .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter((line) => line !== '');
+  return (
+    text
+      .replace(/\*\*|__|~~|`+/g, ' ')
+      .split(/\r?\n+/)
+      // A heading or a list mark at the head of a line; "C#" or "#1" stay.
+      .map((line) => line.replace(/^\s*(#{1,6}|[*-])\s+/, ''))
+      .map((line) => line.replace(/\s+/g, ' ').trim())
+      .filter((line) => line !== '')
+  );
 }
 
 /**

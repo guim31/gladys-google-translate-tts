@@ -135,6 +135,26 @@ test('a stalled request is aborted', async () => {
   });
 });
 
+test('a body that stalls after the headers is aborted too', async () => {
+  const fetch = (url, { signal }) =>
+    Promise.resolve({
+      ok: true,
+      headers: new Headers({ 'content-type': 'audio/mpeg' }),
+      arrayBuffer: () =>
+        new Promise((resolve, reject) => {
+          const keep = setTimeout(() => {}, 1000);
+          signal.addEventListener('abort', () => {
+            clearTimeout(keep);
+            reject(signal.reason);
+          });
+        }),
+    });
+  const client = new GoogleTranslateClient({ fetch, requestTimeoutMs: 20 });
+  await assert.rejects(client.synthesize({ text: 'Oui', language: 'fr', slow: false }), {
+    kind: 'timeout',
+  });
+});
+
 test('a text that does not fit in the time Gladys waits stops early', async () => {
   let clock = 0;
   const fetch = fakeFetch(() => {
@@ -143,8 +163,7 @@ test('a text that does not fit in the time Gladys waits stops early', async () =
   });
   const client = new GoogleTranslateClient({ fetch, now: () => clock });
   await assert.rejects(client.synthesize({ text: LONG, language: 'fr', slow: false }), (err) => {
-    assert.equal(err.kind, 'timeout');
-    assert.match(err.message, /too long/);
+    assert.equal(err.kind, 'too_long');
     return true;
   });
   // 25 s budget: three requests at 10 s each, then it stops.
