@@ -1,67 +1,85 @@
-# Template de démonstration
+# Google Translate TTS
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Donne à Gladys la voix gratuite de **Google Traduction** : les annonces des
+scènes sont prononcées par elle sur vos enceintes. Sans compte ni clé d'API,
+comme la synthèse vocale `google_translate` de Home Assistant (gTTS).
 
 ## Ce que vous obtenez
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+- Une **voix pour Gladys** (Gladys 5.3.0 ou plus récent) : une fois choisie,
+  l'action de scène **Parler sur une enceinte** parle avec Google Traduction sur
+  vos enceintes (Sonos, Google Cast, AirPlay…).
+- Des textes en **33 langues**, automatiquement dans la langue de chaque
+  utilisateur, avec des accents régionaux pour l'anglais, le français,
+  l'espagnol et le portugais, et une lecture lente.
+- Les textes longs (jusqu'aux 2 000 caractères que Gladys envoie) sont coupés
+  en fin de phrase et réunis en un seul clip.
+
+## Avant de commencer : ce qu'est cette voix
+
+- C'est la voix du **site Google Traduction**, utilisée comme gTTS le fait
+  depuis des années. Ce **n'est pas un service officiel de Google** : aucune
+  garantie, et Google peut la changer, la limiter ou l'arrêter à tout moment.
+  L'intégration échoue alors de façon visible (Supervision, journal des
+  scènes), elle ne bascule jamais d'elle-même sur une autre voix.
+- **Chaque texte prononcé est envoyé à Google** (avec l'adresse IP de votre
+  connexion), selon les
+  [règles de confidentialité de Google](https://policies.google.com/privacy).
+  Ne l'utilisez pas pour des textes que vous voulez garder chez vous.
+- Une connexion Internet est nécessaire.
+- Sans lien avec Google. Google Traduction est une marque de Google LLC.
 
 ## Configuration
 
-1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+1. Installez l'intégration depuis le catalogue, puis ouvrez son onglet
+   **Configuration**.
+2. **Langue de la voix** : **Automatique** parle la langue de l'utilisateur à
+   qui Gladys répond, et celle du premier administrateur pour une annonce de
+   scène (le français si Gladys ne la connaît pas). Ou imposez une langue.
+3. **Accent** : une voix régionale (anglais des États-Unis, du Royaume-Uni,
+   d'Australie ou d'Inde ; français de France ou du Canada ; espagnol
+   d'Espagne ou du Mexique ; portugais du Brésil ou du Portugal). Elle sert
+   quand la langue parlée est la sienne ; les autres langues gardent leur voix
+   habituelle. La voix anglaise habituelle est la britannique.
+4. **Lecture lente** : parle plus lentement, comme le bouton de lecture lente
+   de Google Traduction.
+5. Enregistrez, puis appuyez sur **Tester la voix** : une phrase de test est
+   demandée à Google Traduction et la durée du clip reçu s'affiche.
+6. Ouvrez **Intégrations → Intelligence Artificielle** et choisissez **Google
+   Translate TTS** dans la carte **Voix**.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+## Utilisation dans les scènes
 
-## Actions
+Ajoutez une action **Parler sur une enceinte** à une scène, choisissez une
+enceinte et saisissez le texte. Gladys demande le clip à cette intégration,
+puis le sert à l'enceinte sur votre réseau local.
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+L'assistant vocal de Gladys reste en texte seul avec une intégration de voix :
+sa page tourne en HTTPS, et le clip est servi sur le réseau local en HTTP, ce
+que le navigateur bloque. C'est une limite de Gladys, la même pour toutes les
+intégrations de voix.
 
-## Scènes
+## Limites
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
-
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
-
-## Tableau de bord
-
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+- Google Traduction accepte **200 caractères par requête** : un texte plus long
+  est coupé en fin de phrase (puis de proposition, puis de mot) et demandé
+  **une partie à la fois**, environ 0,3 s chacune. Les 2 000 caractères que
+  Gladys envoie au plus font environ 12 requêtes, 4 secondes et un clip de
+  1,5 Mo pour 3 minutes : bien en deçà des 30 secondes que Gladys attend.
+- Chaque partie est lue avec sa propre intonation : un texte long a de courtes
+  pauses entre les parties.
+- Un clip déjà fait (même texte, même voix, même vitesse) est gardé en mémoire
+  (les 16 derniers), et une annonce sur plusieurs enceintes ne sollicite Google
+  qu'une fois.
+- Quand Google refuse trop de requêtes (HTTP 429), l'intégration attend
+  l'annonce suivante : elle n'insiste pas.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- La **Supervision** indique si Google Traduction répond et, sinon, pourquoi
+  (pas d'Internet, trop de requêtes, la voix gratuite a changé…).
+- Une annonce en échec est écrite dans les **journaux** de l'intégration, et
+  l'action de scène échoue dans le journal des scènes.
+- « La voix gratuite a peut-être changé » : Google a modifié son site ;
+  cherchez une mise à jour de l'intégration.
+- Démarrez le conteneur avec `LOG_LEVEL=debug` pour voir chaque requête.
