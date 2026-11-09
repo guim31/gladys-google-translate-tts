@@ -1,177 +1,537 @@
 {
   "manifest_version": 1,
-  "type": "device",
-  "name": "Demo Devices Template",
+  "type": "tts",
+  "name": "Google Translate TTS",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "The free voice of Google Translate for Gladys announcements: no account, no API key.",
+    "fr": "La voix gratuite de Google Traduction pour les annonces de Gladys : sans compte ni clé d'API.",
+    "de": "Die kostenlose Stimme von Google Übersetzer für Ansagen von Gladys: ohne Konto, ohne API-Schlüssel.",
+    "es": "La voz gratuita de Google Traductor para los anuncios de Gladys: sin cuenta ni clave de API."
   },
   "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
-  "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "docker_image": "ghcr.io/guim31/gladys-google-translate-tts:1.0.0",
+  "gladys_version": ">=5.3.0",
+  "cover_image": "https://raw.githubusercontent.com/guim31/gladys-google-translate-tts/main/cover.png",
+  "categories": ["assistants"],
+  "keywords": [
+    "google translate",
+    "google traduction",
+    "gtts",
+    "tts",
+    "text-to-speech",
+    "synthèse vocale",
+    "voix",
+    "voice"
+  ],
+  "transports": ["cloud"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": {
+        "en": "The free voice of Google Translate",
+        "fr": "La voix gratuite de Google Traduction",
+        "de": "Die kostenlose Stimme von Google Übersetzer",
+        "es": "La voz gratuita de Google Traductor"
+      },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "No account or key: the voice of the Google Translate website, as with gTTS. Unofficial and without guarantee: Google may change or limit it. Texts are sent to Google. Then select this voice on the Artificial Intelligence page.",
+        "fr": "Sans compte ni clé : la voix du site Google Traduction, comme gTTS. Non officielle et sans garantie : Google peut la changer ou la limiter. Les textes sont envoyés à Google. Choisissez ensuite cette voix sur la page Intelligence Artificielle.",
+        "de": "Ohne Konto und Schlüssel: die Stimme der Website Google Übersetzer, wie bei gTTS. Inoffiziell und ohne Garantie: Google kann sie ändern oder begrenzen. Die Texte gehen an Google. Wähle die Stimme dann auf der Seite Künstliche Intelligenz.",
+        "es": "Sin cuenta ni clave: la voz del sitio Google Traductor, como gTTS. No oficial y sin garantía: Google puede cambiarla o limitarla. Los textos se envían a Google. Después, elija esta voz en la página Inteligencia artificial."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://policies.google.com/privacy",
+          "label": {
+            "en": "Google privacy policy",
+            "fr": "Règles de confidentialité de Google",
+            "de": "Datenschutzerklärung von Google",
+            "es": "Política de privacidad de Google"
+          }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
-      "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
-    },
-    {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
+      "key": "language",
       "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
+      "label": {
+        "en": "Language of the voice",
+        "fr": "Langue de la voix",
+        "de": "Sprache der Stimme",
+        "es": "Idioma de la voz"
+      },
+      "description": {
+        "en": "Automatic: the language of the user Gladys answers, or of the first administrator for an announcement (French when unknown).",
+        "fr": "Automatique : la langue de l'utilisateur à qui Gladys répond, ou du premier administrateur pour une annonce (français si inconnue).",
+        "de": "Automatisch: die Sprache des Benutzers, dem Gladys antwortet, bei einer Ansage die des ersten Administrators (sonst Französisch).",
+        "es": "Automático: el idioma del usuario al que responde Gladys, o del primer administrador para un anuncio (francés si se desconoce)."
+      },
       "required": false,
-      "default": "celsius",
+      "default": "auto",
       "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
+        {
+          "value": "auto",
+          "label": {
+            "en": "Automatic",
+            "fr": "Automatique",
+            "de": "Automatisch",
+            "es": "Automático"
+          }
+        },
+        {
+          "value": "ar",
+          "label": {
+            "en": "العربية",
+            "fr": "العربية",
+            "de": "العربية",
+            "es": "العربية"
+          }
+        },
+        {
+          "value": "bg",
+          "label": {
+            "en": "Български",
+            "fr": "Български",
+            "de": "Български",
+            "es": "Български"
+          }
+        },
+        {
+          "value": "ca",
+          "label": {
+            "en": "Català",
+            "fr": "Català",
+            "de": "Català",
+            "es": "Català"
+          }
+        },
+        {
+          "value": "cs",
+          "label": {
+            "en": "Čeština",
+            "fr": "Čeština",
+            "de": "Čeština",
+            "es": "Čeština"
+          }
+        },
+        {
+          "value": "da",
+          "label": {
+            "en": "Dansk",
+            "fr": "Dansk",
+            "de": "Dansk",
+            "es": "Dansk"
+          }
+        },
+        {
+          "value": "de",
+          "label": {
+            "en": "Deutsch",
+            "fr": "Deutsch",
+            "de": "Deutsch",
+            "es": "Deutsch"
+          }
+        },
+        {
+          "value": "el",
+          "label": {
+            "en": "Ελληνικά",
+            "fr": "Ελληνικά",
+            "de": "Ελληνικά",
+            "es": "Ελληνικά"
+          }
+        },
+        {
+          "value": "en",
+          "label": {
+            "en": "English",
+            "fr": "English",
+            "de": "English",
+            "es": "English"
+          }
+        },
+        {
+          "value": "es",
+          "label": {
+            "en": "Español",
+            "fr": "Español",
+            "de": "Español",
+            "es": "Español"
+          }
+        },
+        {
+          "value": "fi",
+          "label": {
+            "en": "Suomi",
+            "fr": "Suomi",
+            "de": "Suomi",
+            "es": "Suomi"
+          }
+        },
+        {
+          "value": "fr",
+          "label": {
+            "en": "Français",
+            "fr": "Français",
+            "de": "Français",
+            "es": "Français"
+          }
+        },
+        {
+          "value": "he",
+          "label": {
+            "en": "עברית",
+            "fr": "עברית",
+            "de": "עברית",
+            "es": "עברית"
+          }
+        },
+        {
+          "value": "hi",
+          "label": {
+            "en": "हिन्दी",
+            "fr": "हिन्दी",
+            "de": "हिन्दी",
+            "es": "हिन्दी"
+          }
+        },
+        {
+          "value": "hr",
+          "label": {
+            "en": "Hrvatski",
+            "fr": "Hrvatski",
+            "de": "Hrvatski",
+            "es": "Hrvatski"
+          }
+        },
+        {
+          "value": "hu",
+          "label": {
+            "en": "Magyar",
+            "fr": "Magyar",
+            "de": "Magyar",
+            "es": "Magyar"
+          }
+        },
+        {
+          "value": "id",
+          "label": {
+            "en": "Bahasa Indonesia",
+            "fr": "Bahasa Indonesia",
+            "de": "Bahasa Indonesia",
+            "es": "Bahasa Indonesia"
+          }
+        },
+        {
+          "value": "it",
+          "label": {
+            "en": "Italiano",
+            "fr": "Italiano",
+            "de": "Italiano",
+            "es": "Italiano"
+          }
+        },
+        {
+          "value": "ja",
+          "label": {
+            "en": "日本語",
+            "fr": "日本語",
+            "de": "日本語",
+            "es": "日本語"
+          }
+        },
+        {
+          "value": "ko",
+          "label": {
+            "en": "한국어",
+            "fr": "한국어",
+            "de": "한국어",
+            "es": "한국어"
+          }
+        },
+        {
+          "value": "nl",
+          "label": {
+            "en": "Nederlands",
+            "fr": "Nederlands",
+            "de": "Nederlands",
+            "es": "Nederlands"
+          }
+        },
+        {
+          "value": "no",
+          "label": {
+            "en": "Norsk",
+            "fr": "Norsk",
+            "de": "Norsk",
+            "es": "Norsk"
+          }
+        },
+        {
+          "value": "pl",
+          "label": {
+            "en": "Polski",
+            "fr": "Polski",
+            "de": "Polski",
+            "es": "Polski"
+          }
+        },
+        {
+          "value": "pt",
+          "label": {
+            "en": "Português",
+            "fr": "Português",
+            "de": "Português",
+            "es": "Português"
+          }
+        },
+        {
+          "value": "ro",
+          "label": {
+            "en": "Română",
+            "fr": "Română",
+            "de": "Română",
+            "es": "Română"
+          }
+        },
+        {
+          "value": "ru",
+          "label": {
+            "en": "Русский",
+            "fr": "Русский",
+            "de": "Русский",
+            "es": "Русский"
+          }
+        },
+        {
+          "value": "sk",
+          "label": {
+            "en": "Slovenčina",
+            "fr": "Slovenčina",
+            "de": "Slovenčina",
+            "es": "Slovenčina"
+          }
+        },
+        {
+          "value": "sv",
+          "label": {
+            "en": "Svenska",
+            "fr": "Svenska",
+            "de": "Svenska",
+            "es": "Svenska"
+          }
+        },
+        {
+          "value": "th",
+          "label": {
+            "en": "ไทย",
+            "fr": "ไทย",
+            "de": "ไทย",
+            "es": "ไทย"
+          }
+        },
+        {
+          "value": "tr",
+          "label": {
+            "en": "Türkçe",
+            "fr": "Türkçe",
+            "de": "Türkçe",
+            "es": "Türkçe"
+          }
+        },
+        {
+          "value": "uk",
+          "label": {
+            "en": "Українська",
+            "fr": "Українська",
+            "de": "Українська",
+            "es": "Українська"
+          }
+        },
+        {
+          "value": "vi",
+          "label": {
+            "en": "Tiếng Việt",
+            "fr": "Tiếng Việt",
+            "de": "Tiếng Việt",
+            "es": "Tiếng Việt"
+          }
+        },
+        {
+          "value": "zh-CN",
+          "label": {
+            "en": "中文（简体）",
+            "fr": "中文（简体）",
+            "de": "中文（简体）",
+            "es": "中文（简体）"
+          }
+        },
+        {
+          "value": "zh-TW",
+          "label": {
+            "en": "中文（繁體）",
+            "fr": "中文（繁體）",
+            "de": "中文（繁體）",
+            "es": "中文（繁體）"
+          }
+        }
       ]
     },
     {
-      "key": "poll_frequency",
-      "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "key": "accent",
+      "type": "select",
+      "label": {
+        "en": "Accent",
+        "fr": "Accent",
+        "de": "Akzent",
+        "es": "Acento"
+      },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "Regional voice used when the language spoken is its own; the others keep their usual voice.",
+        "fr": "Voix régionale utilisée quand la langue parlée est la sienne ; les autres gardent leur voix habituelle.",
+        "de": "Regionale Stimme, wenn ihre Sprache gesprochen wird; die anderen behalten ihre übliche Stimme.",
+        "es": "Voz regional usada cuando se habla su idioma; los demás conservan su voz habitual."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
-      "max": 3600
+      "default": "default",
+      "options": [
+        {
+          "value": "default",
+          "label": {
+            "en": "Usual voice of each language",
+            "fr": "Voix habituelle de chaque langue",
+            "de": "Übliche Stimme jeder Sprache",
+            "es": "Voz habitual de cada idioma"
+          }
+        },
+        {
+          "value": "en-US",
+          "label": {
+            "en": "English (United States)",
+            "fr": "English (United States)",
+            "de": "English (United States)",
+            "es": "English (United States)"
+          }
+        },
+        {
+          "value": "en-GB",
+          "label": {
+            "en": "English (United Kingdom)",
+            "fr": "English (United Kingdom)",
+            "de": "English (United Kingdom)",
+            "es": "English (United Kingdom)"
+          }
+        },
+        {
+          "value": "en-AU",
+          "label": {
+            "en": "English (Australia)",
+            "fr": "English (Australia)",
+            "de": "English (Australia)",
+            "es": "English (Australia)"
+          }
+        },
+        {
+          "value": "en-IN",
+          "label": {
+            "en": "English (India)",
+            "fr": "English (India)",
+            "de": "English (India)",
+            "es": "English (India)"
+          }
+        },
+        {
+          "value": "fr-FR",
+          "label": {
+            "en": "Français (France)",
+            "fr": "Français (France)",
+            "de": "Français (France)",
+            "es": "Français (France)"
+          }
+        },
+        {
+          "value": "fr-CA",
+          "label": {
+            "en": "Français (Canada)",
+            "fr": "Français (Canada)",
+            "de": "Français (Canada)",
+            "es": "Français (Canada)"
+          }
+        },
+        {
+          "value": "es-ES",
+          "label": {
+            "en": "Español (España)",
+            "fr": "Español (España)",
+            "de": "Español (España)",
+            "es": "Español (España)"
+          }
+        },
+        {
+          "value": "es-MX",
+          "label": {
+            "en": "Español (México)",
+            "fr": "Español (México)",
+            "de": "Español (México)",
+            "es": "Español (México)"
+          }
+        },
+        {
+          "value": "pt-BR",
+          "label": {
+            "en": "Português (Brasil)",
+            "fr": "Português (Brasil)",
+            "de": "Português (Brasil)",
+            "es": "Português (Brasil)"
+          }
+        },
+        {
+          "value": "pt-PT",
+          "label": {
+            "en": "Português (Portugal)",
+            "fr": "Português (Portugal)",
+            "de": "Português (Portugal)",
+            "es": "Português (Portugal)"
+          }
+        }
+      ]
+    },
+    {
+      "key": "slow",
+      "type": "boolean",
+      "label": {
+        "en": "Slow reading",
+        "fr": "Lecture lente",
+        "de": "Langsames Vorlesen",
+        "es": "Lectura lenta"
+      },
+      "description": {
+        "en": "Speaks more slowly, like the slow button of Google Translate.",
+        "fr": "Parle plus lentement, comme le bouton de lecture lente de Google Traduction.",
+        "de": "Spricht langsamer, wie die Taste für langsames Vorlesen von Google Übersetzer.",
+        "es": "Habla más despacio, como el botón de lectura lenta de Google Traductor."
+      },
+      "required": false,
+      "default": false
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "test_voice",
+      "label": {
+        "en": "Test the voice",
+        "fr": "Tester la voix",
+        "de": "Stimme testen",
+        "es": "Probar la voz"
+      },
+      "description": {
+        "en": "Asks Google Translate for a test sentence with the saved settings and shows the result (save first).",
+        "fr": "Demande une phrase de test à Google Traduction avec les réglages enregistrés et affiche le résultat (enregistrez d'abord).",
+        "de": "Fragt bei Google Übersetzer einen Testsatz mit den gespeicherten Einstellungen an und zeigt das Ergebnis (zuerst speichern).",
+        "es": "Pide a Google Traductor una frase de prueba con los ajustes guardados y muestra el resultado (guarde primero)."
+      },
       "timeout_seconds": 30
-    },
-    {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ]
-    }
-  ],
-  "scene_triggers": [
-    {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
-      "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
-      },
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
-        },
-        {
-          "key": "target",
-          "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
-          "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
-          ]
-        }
-      ],
-      "variables": [
-        {
-          "key": "target",
-          "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
-        }
-      ]
-    }
-  ],
-  "scene_actions": [
-    {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
-      "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
-      },
-      "timeout_seconds": 15,
-      "fields": [
-        {
-          "key": "device",
-          "type": "select",
-          "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
-          "required": true
-        }
-      ],
-      "outputs": [
-        {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
-        }
-      ]
-    }
-  ],
-  "widgets": [
-    {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
-      "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
-      },
-      "icon": "activity",
-      "action_timeout_seconds": 15
     }
   ]
 }

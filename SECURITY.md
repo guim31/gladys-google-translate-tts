@@ -30,6 +30,12 @@ Gladys before reporting a problem.
 
 In scope: the code of this repository and the Docker image it publishes.
 
+The integration stores nothing on disk (`/data` stays empty) and holds no
+secret: the Google Translate voice needs no account and no key. It keeps the
+last 16 clips in memory only. Its only network traffic is HTTPS to
+`translate.google.com`, carrying the texts Gladys asks it to speak, and the
+connection to Gladys itself.
+
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
-and the third-party services and devices the integration talks to.
+and Google Translate.

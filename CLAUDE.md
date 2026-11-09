@@ -31,16 +31,18 @@ pushing.
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
-src/scenes.js                     scene action handlers (manifest `scene_actions`)
-src/widgets.js                    dashboard widget handlers (manifest `widgets`)
-src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
-gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+index.js                          SDK wiring only: src/app.js registers the handlers before connect()
+src/app.js                        every SDK handler -> GoogleTranslateTts (also used by the tests)
+src/integration.js                GoogleTranslateTts: settings, synthesis, memory, status, test button
+src/google/client.js              requests to translate_tts, one at a time, 25 s budget per text
+src/split.js                      text -> chunks of at most 180 characters (sentences, clauses, words)
+src/mp3.js                        MPEG Layer III frame walker: validation, duration, ID3 strip
+src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults), languages, accents
+src/lifecycle.js                  exit on an unhandled rejection
+gladys-assistant-integration.json manifest: type "tts", config_schema, the test_voice action
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (same sections)
+test/                             node --test, against the SDK's fake Gladys and a fake fetch;
+                                  test/fixtures/*.mp3 are real clips of the endpoint
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -251,3 +253,22 @@ long, et sur un « Sie »/« Ihr… » de politesse en allemand. Le store exige 
 - Docs `en`, `fr`, `de`, `es` avec les mêmes sections.
 - Chauffe, ouverture, sécurité : ne rien rendre pilotable « comme un thermostat » ou par un assistant
   vocal quand une erreur serait dangereuse (leçon d'OctoPrint).
+
+## Google Translate TTS (vérifié le 09/11/2026)
+
+- Endpoint : `GET https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=<code>&q=<texte>`
+  (paramètre `ttsspeed=0.24` pour la lecture lente, celui de gTTS 1.x). Réponse `audio/mpeg` : MPEG-2 Layer III,
+  24 kHz mono, 64 kbit/s, **ni ID3 ni en-tête Xing/Info** : les clips se concatènent trame à trame (vérifié à
+  ffprobe/ffmpeg sur un clip de 2 000 caractères, 12 requêtes, 3,8 s, 1,4 Mo, 184 s d'audio). Une petite
+  User-Agent honnête suffit ; ni cookie ni imitation de navigateur.
+- **200 unités UTF-16 au plus** par requête (201 → HTTP 400 ; 100 émojis passent). On coupe à 180.
+- **Le `tld` de gTTS (translate.google.co.uk, .ca…) ne change rien** sur cet endpoint (clips identiques) ; les
+  **codes régionaux** si (`en-US` ≠ `en`, `en` étant la voix britannique ; `fr-CA`, `es-MX`, `pt-PT`…). D'où un
+  réglage « Accent » par code régional, pas par domaine. `pt` = `pt-BR`, `es` = `es-ES`, `fr` = `fr-FR`.
+- Les clips ne sont pas parfaitement déterministes (deux requêtes identiques peuvent différer d'octets) : ne pas
+  comparer des empreintes dans les tests réels.
+- Un code inconnu (`zz`) → HTTP 400 : les langues du formulaire sont toutes vérifiées à 200 (liste `VOICE_LANGUAGES`).
+- Type `tts` : pas d'appareil, donc pas de `test/gladys-rules.test.js` ni de table des fonctionnalités ; pas de
+  widget, déclencheur ni action de scène (l'écran d'une intégration `tts` n'a que Configuration, Supervision,
+  Journaux). La langue arrive avec chaque demande (celle du premier administrateur pour une annonce) : le champ
+  `language` vaut `auto` par défaut, repli `fr`.

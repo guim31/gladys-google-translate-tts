@@ -1,8 +1,8 @@
 {
-  "name": "gladys-integration-template-js",
+  "name": "gladys-google-translate-tts",
   "version": "1.0.0",
   "private": true,
-  "description": "Official starter template to build an external integration for Gladys Assistant with the JavaScript SDK.",
+  "description": "Gladys Assistant text-to-speech provider using the free voice of Google Translate.",
   "type": "module",
   "main": "index.js",
   "scripts": {
